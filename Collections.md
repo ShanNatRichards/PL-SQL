@@ -1,11 +1,12 @@
-# Collections
+# PL/SQL Collections
 
-### Exploring pl/sql collections: Associative Arrays, Varrays, and Nested Tables
+### Associative Arrays,Nested Tables, Varrays
 
 1. Associative Arrays 
-Flexible 
+ 
+   Array structure like a 1 column table that has flexible sizing, indexed by PLS_INTEGER or VARCHAR.
 
-```PLSQL
+```SQL
 SET SERVEROUTPUT ON;
 
 DECLARE
@@ -25,7 +26,6 @@ DECLARE
 BEGIN
 
   v_i:= 1;
-
   FOR rec in dept LOOP --open and loop through the cursor to fill the array
     dep_array(v_i).id := rec.id;
     dep_array(v_i).deptname:= rec.deptname;
@@ -33,6 +33,7 @@ BEGIN
   END LOOP;
 
  --let's print the values stored in our array
+ 
   v_i:= dep_array.FIRST; --grab the first index position in our array
  
   WHILE (v_i IS NOT NULL) LOOP
@@ -41,6 +42,7 @@ BEGIN
   END LOOP;
 
 --let's print this backwards
+
   v_i:= darray.LAST;
 
   WHILE (v_i IS NOT NULL) LOOP
@@ -51,101 +53,73 @@ BEGIN
 END;
 
 ```
+2. Nested Arrays
+ 
+ An array structure like a 1 column table that can be created at the database level but uses sequential indexing. 
+ That is, must create an index space with EXTEND before adding elements to the array.
 
-
-
-/* NESTED ARRAYS */
-
---this is a pl/sql table but it can declared at the database level
---uses sequential indexing 
+```SQL
 
 DECLARE
-  TYPE NA IS 
+  TYPE NA IS          --set up a nested array type
   TABLE OF m_departments%ROWTYPE;
 
-  my_array NA := NA();-- must pass it a constructor
+  dept_array NA := NA();   --declare a nested array and initialize with constructor
 
-  CURSOR dept IS
-    SELECT *
-    FROM m_departments;
+  CURSOR dept IS         --set up a cursor 
+  SELECT *
+  FROM m_departments;
 
 BEGIN
 
-  FOR rec in dept LOOP
-    dbms_output.put_line('Before Extend: Last -> ' || my_array.LAST || '  First -> ' || my_array.FIRST);
-    my_array.EXTEND;
-    my_array.EXTEND;
-    dbms_output.put_line('After Extend: Last -> ' || my_array.last || '  First -> ' || my_array.first);
-    my_array(my_array.LAST).id:= rec.id;
-    my_array(my_array.LAST).deptname:= rec.deptname;
-    dbms_output.put_line('After Rec Added: Last -> ' || my_array.LAST || '  First -> ' || my_array.FIRST);  
-    dbms_output.put_line('');
-    dbms_output.put_line('Next iteration:');
+  FOR rec in dept LOOP    
+    dept_array.EXTEND;      
+    dept_array(dept_array.LAST).id:= rec.id;  
+    dept_array(dept_array.LAST).deptname:= rec.deptname;  
   END LOOP;
  
+ --print the elements in the array
   FOR i IN my_array.FIRST..my_array.LAST LOOP
     DBMS_OUTPUT.PUT_LINE (i || ' : ' || my_array(i).id ||' - ' || my_array(i).deptname);
   END LOOP;
 
-
 END;
 
+```
 
---another nested array
+3. VARRAYS
 
-DECLARE 
-  TYPE NA IS
-  TABLE OF NUMBER;
+  A collection with a fixed number of elements and no holes (i.e you cannot delete elements in a varray).
+  However, you can write over elements in the VARRAY.
 
-  array_1 NA:= NA(7,10,2,5);
-
-BEGIN
-  dbms_output.put_line('Last ->' || array_1.last || '  First -> ' || array_1.first);
-  array_1.EXTEND(5);
-  
-  array_1.delete(1);
-  dbms_output.put_line('Last ->' || array_1.last || '  First -> ' || array_1.first);
-END;
-
-
-
-/*VARRAYS*/
---a collection with a fixed number of elements and no gaps
---i.e. you cannot delete varray elements
+```SQL
 
 DECLARE
-  TYPE va IS 
+  TYPE VA IS     --set up our varray type
   VARRAY(10) OF NUMBER;
-  array_2 va := va(22,11,55,33,77,44,22,33,44);
+  
+  num_array VA := VA(22,11,55,33,77,44,22,33,44);  --declare a varray and initialize with numbers.
   v_i NUMBER;
 
 BEGIN 
-  dbms_output.put_line('Last ->' || array_2.last || '  First -> ' || array_2.first);
-  
-  v_i := array_2.FIRST;
 
+  -- print the values passed in when the varray was initialized.
+   
+  v_i := num_array.FIRST;
   WHILE (v_i IS NOT NULL) LOOP
-    DBMS_OUTPUT.PUT_LINE (v_i || ' : ' || array_2(v_i));
-    v_i:= array_2.NEXT(v_i);    
-  END LOOP;
+    DBMS_OUTPUT.PUT_LINE (v_i || ' : ' || num_array(v_i));
+    v_i:= num_array.NEXT(v_i);    
+  END LOOP;  
+ 
+ -- our VARRAY can hold a max of 10 numbers but we have only passed in 9 numbers. 
+ -- Let's fill the last index position.
   
-  dbms_output.put_line('Last ->' || array_2.last || '  First -> ' || array_2.first);
+  num_array.EXTEND();
+  num_array(num_array.LAST) = 88;  
   
-  array_2.EXTEND(2);
-  
-  dbms_output.put_line('Last ->' || array_2.last || '  First -> ' || array_2.first);
---array_2.delete(3); --nope cannot delete this index, not allowed
-  array_2(3):=111;
-
-  v_i := array_2.FIRST;
-  WHILE (v_i IS NOT NULL) LOOP
-    DBMS_OUTPUT.PUT_LINE (v_i || ' : ' || array_2(v_i));
-    v_i:= array_2.NEXT(v_i);    
-  END LOOP;
 END;
+```
 
-
----------------------------------------------------
 
 
 
