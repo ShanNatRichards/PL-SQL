@@ -1,131 +1,56 @@
-/*Goal is to explore pl/sql collections:
-Associative array
-Varrays
-Nested Tables
-**/
+# Collections
 
-/*Let's start with collections for quick refresh**/
+### Exploring pl/sql collections: Associative Arrays, Varrays, and Nested Tables
 
-/* Associative Arrays */
+1. Associative Arrays 
+Flexible 
 
-set SERVEROUTPUT ON;
+```PLSQL
+SET SERVEROUTPUT ON;
 
 DECLARE
 
-TYPE aa IS 
-TABLE OF NUMBER
-INDEX BY PLS_INTEGER;
-
-my_array aa;
-counter PLS_INTEGER;
-
---my_array(1):= 56; -> NOPE. No initializing in the declare section;
-
-BEGIN
-my_array(2):= 56;
-
-my_array(10):= 50036;
-
-counter:= my_array.FIRST;
-IF NOT (my_array.EXISTS(3)) THEN
-    DBMS_OUTPUT.PUT_LINE('No, this index position does not exists.');
-END IF;
-
-WHILE (counter IS NOT NULL) LOOP
-    DBMS_OUTPUT.PUT_LINE (counter || ' : ' || my_array(counter));
-    counter:= my_array.NEXT(counter);
-END LOOP;
-
-END;
-
-
-
-
-
-
-
-
-
-/*Complex associative array with varchar2 indexing */
-
-DECLARE
-
-TYPE drec IS RECORD (
-NAME m_departments.deptname%TYPE);
-
-TYPE aa IS 
-TABLE OF drec
-INDEX BY VARCHAR2(4);
-
-d_arr AA;
-
-CURSOR dept IS
-SELECT id, deptname
-from m_departments;
-
-idx VARCHAR2(4);
+  TYPE AA IS
+  TABLE OF M_Departments%ROWTYPE  --set up or associative array type 
+  INDEX BY PLS_INTEGER;
+    
+  dep_array AA; --declare an array
+    
+  v_i PLS_INTEGER; --variable for indexing the array
+    
+  CURSOR dept IS --set up a cursor 
+  SELECT *
+  FROM m_departments;
 
 BEGIN
 
-FOR rec in dept LOOP
-     d_arr(rec.ID).name:= rec.deptname;    
-END LOOP;
+  v_i:= 1;
 
-idx := d_arr.FIRST;
+  FOR rec in dept LOOP --open and loop through the cursor to fill the array
+    dep_array(v_i).id := rec.id;
+    dep_array(v_i).deptname:= rec.deptname;
+    v_i:= v_i + 1;
+  END LOOP;
 
-WHILE (idx IS NOT NULL) LOOP
-    DBMS_OUTPUT.PUT_LINE ( idx || ': ' ||d_arr(idx).name);
-    idx:= d_arr.NEXT(idx);
-END LOOP;
+ --let's print the values stored in our array
+  v_i:= dep_array.FIRST; --grab the first index position in our array
+ 
+  WHILE (v_i IS NOT NULL) LOOP
+    DBMS_OUTPUT.PUT_LINE (  'INDEX '||v_i || ' : ' || darray(v_i).deptname);
+    v_i:= dep_arr.NEXT(v_i);
+  END LOOP;
 
+--let's print this backwards
+  v_i:= darray.LAST;
 
-END;
-*/
-
-
-
-
-
-
-/*Complex assoc array with pls_integer indexing */
-
-
-DECLARE
-    --drec M_departments%ROWTYPE; NOPE! WILL NOT WORK.
-    TYPE AA IS
-    TABLE OF M_Departments%ROWTYPE  -- <- must use rowtype here and not in separate variable above 
-    INDEX BY PLS_INTEGER;
-    
-    darray AA;
-    
-    v_i PLS_INTEGER;
-    
-    CURSOR dept IS
-    SELECT *
-    FROM m_departments;
-
-BEGIN
-v_i:= 1;
-
-FOR rec in dept LOOP
-    darray(v_i).id := rec.id;
-    darray(v_i).deptname:= rec.deptname;
-    v_i:= v_i +1;
-END LOOP;
-
---LET'S print this backwards
-
-v_i:= darray.LAST;
-
-WHILE (v_i IS NOT NULL) LOOP
+  WHILE (v_i IS NOT NULL) LOOP
     DBMS_OUTPUT.PUT_LINE (  'INDEX '||v_i || ' : ' || darray(v_i).deptname);
     v_i:= darray.PRIOR(v_i);
-END LOOP;
-
+  END LOOP;
 
 END;
 
-*/
+```
 
 
 
