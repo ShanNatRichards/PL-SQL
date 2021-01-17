@@ -114,7 +114,7 @@ BEGIN
  -- our VARRAY can hold a max of 10 numbers but we have only passed in 9 numbers. 
  -- Let's fill the last index position.
   
-  num_array.EXTEND();
+  num_array.EXTEND;
   num_array(num_array.LAST) = 88;  
   
 END;
